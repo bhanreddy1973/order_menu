@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { foodItems } from "@/data/foodItem";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../../firebase"; // Adjust path accordingly
 
 export default function MenuPage() {
   const router = useRouter();
@@ -12,20 +14,41 @@ export default function MenuPage() {
   const [expandedIds, setExpandedIds] = useState<number[]>([]); // allow multiple expanded
   const [activeTabs, setActiveTabs] = useState<Record<number, string>>({});
   const [selectedCategory, setSelectedCategory] = useState("Main Course"); // default or 'All'
+const [menuItems, setMenuItems] = useState<any[]>([]);
+// useEffect(() => {
+//   const stored = localStorage.getItem("userData");
+//   if (stored) setUser(JSON.parse(stored));
+
+//   const storedCart = localStorage.getItem("orderCart");
+//   if (storedCart) {
+//     const parsed = JSON.parse(storedCart) as CartItem[];
+//     const cartMap: Record<number, CartItem> = Object.fromEntries(
+//       parsed.map((item) => [item.id, item])
+//     );
+//     setCart(cartMap);
+//   }
+// }, []);
 
 useEffect(() => {
-  const stored = localStorage.getItem("userData");
-  if (stored) setUser(JSON.parse(stored));
+    const fetchMenu = async () => {
+      try {
+        const menuRef = collection(db, "restaurants", "bbq_in", "menu");
+        console.log(menuRef)
+        const snapshot = await getDocs(menuRef);
 
-  const storedCart = localStorage.getItem("orderCart");
-  if (storedCart) {
-    const parsed = JSON.parse(storedCart) as CartItem[];
-    const cartMap: Record<number, CartItem> = Object.fromEntries(
-      parsed.map((item) => [item.id, item])
-    );
-    setCart(cartMap);
-  }
-}, []);
+        const items = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        console.log(items)
+        setMenuItems(items);
+      } catch (error) {
+        console.error("Error fetching menu:", error);
+      }
+    };
+
+    fetchMenu();
+  }, []);
 
   const toggleExpand = (id: number) => {
     setExpandedIds((prev) => {
@@ -54,16 +77,16 @@ useEffect(() => {
 
   const [cart, setCart] = useState<Record<number, CartItem>>({});
 
-  // const categoryTotals = Object.values(cart).reduce((acc, item) => {
-  //   if (!acc[item.category]) acc[item.category] = 0;
-  //   acc[item.category] += item.total;
-  //   return acc;
-  // }, {} as Record<string, number>);
+  const categoryTotals = Object.values(cart).reduce((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = 0;
+    acc[item.category] += item.total;
+    return acc;
+  }, {} as Record<string, number>);
 
   const visibleItems =
     selectedCategory === "All"
-      ? foodItems
-      : foodItems.filter((item) => item.category === selectedCategory);
+      ? menuItems
+      : menuItems.filter((item) => item.dish_type === selectedCategory);
 
       type IncomingItem = Omit<CartItem, 'count' | 'addedBy' | 'total'>;
  const increaseItem = (item: IncomingItem) => {
@@ -176,11 +199,11 @@ useEffect(() => {
                     >
                       ❌
                     </button>
-                    <img
+                    {/* <img
                       src="/biryani-banner.jpg"
                       alt={item.name}
                       className="rounded-xl mb-3 h-40 w-full object-cover"
-                    />
+                    /> */}
                   </div>
 
                   <div className="flex justify-between items-center">
@@ -223,7 +246,7 @@ useEffect(() => {
                   </div>
 
                   {/* Tab Content */}
-                  <div className="mt-4 mb-4 text-sm text-gray-700">
+                  {/* <div className="mt-4 mb-4 text-sm text-gray-700">
                     {tab === "Ingredients" && (
                       <div className="flex flex-wrap gap-2">
                         {item.details.ingredients.slice(0, 6).map((ing, i) => (
@@ -264,7 +287,7 @@ useEffect(() => {
                         <span>🧈 {item.details.nutrition.fat}</span>
                       </div>
                     )}
-                  </div>
+                  </div> */}
 
                   {isInCart(item.id) && (
                     <div className="mt-4">

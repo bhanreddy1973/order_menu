@@ -66,7 +66,7 @@ export default function Home() {
         {/* Special Card */}
         <div className="w-full max-w-md bg-gradient-to-r from-yellow-100 to-green-100 rounded-xl p-4 mt-6 text-center">
           <div className="flex justify-center mb-2">
-            <img src="/biryani-icon.png" alt="dish" className="w-10 h-10" />
+            {/* <img src="/biryani-icon.png" alt="dish" className="w-10 h-10" /> */}
           </div>
           <h2 className="font-semibold text-lg">Chefs Special Today</h2>
           <p className="text-sm mt-1">Aromatic Hyderabadi Biryani with tender mutton and fragrant basmati rice</p>
