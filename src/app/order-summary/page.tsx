@@ -1,24 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { db } from '../../../firebase'; // adjust import
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 
 type CartItem = {
   id: number;
   name: string;
   price: number;
   count: number;
-  category: string;
+  dish_type: string;
   addedBy: string;
 };
 
 export default function OrderSummary() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [user, setUser] = useState<{
+    userId:string;
     tableCode: number;
     userName: string;
   } | null>(null);
   const router = useRouter();
-
+  
   useEffect(() => {
     const storedUser = localStorage.getItem("userData");
     if (storedUser) setUser(JSON.parse(storedUser));
@@ -28,8 +31,8 @@ export default function OrderSummary() {
   }, []);
 
   const grouped = cart.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = [];
-    acc[item.category].push(item);
+    if (!acc[item.dish_type]) acc[item.dish_type] = [];
+    acc[item.dish_type].push(item);
     return acc;
   }, {} as Record<string, CartItem[]>);
 
@@ -42,6 +45,27 @@ export default function OrderSummary() {
       return updated;
     });
   };
+
+  // function addOrder(){
+  //   console.log(grouped);
+  // }
+  async function addOrder() {
+  try {
+    const docRef = await addDoc(collection(db, "restaurants","bbq_in","orders"), {
+      ...grouped,
+      userID: user?.userId,
+      status: "pending",
+      createdAt: Timestamp.now()
+    });
+    // console.log("Order added with ID: ", docRef.id);
+    localStorage.setItem("orderId",docRef.id );
+    router.push("/order-arrival")
+    return docRef.id;
+  } catch (e) {
+    console.error("Error adding order: ", e);
+    throw e;
+  }
+}
 
   return (
     <div className="min-h-screen bg-white px-4 pt-6 pb-32 text-gray-900">
@@ -124,7 +148,7 @@ export default function OrderSummary() {
         >
           Add More
         </button>
-        <button className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-medium">
+        <button className="bg-green-600 text-white px-5 py-2 rounded-full text-sm font-medium" onClick={() => addOrder()}>
           Proceed to Order
         </button>
       </div>
@@ -151,3 +175,5 @@ export default function OrderSummary() {
     </div>
   );
 }
+
+

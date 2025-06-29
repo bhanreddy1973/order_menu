@@ -1,6 +1,8 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../firebase'; // adjust path based on your structure
 // import { authenticateUser } from '@utils/authService';
 // import { db } from '../../firebase';
 // import { collection, getDocs } from 'firebase/firestore';
@@ -11,11 +13,30 @@ export default function Home() {
   const [phone, setPhone] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // const userData = await authenticateUser(name, phone);
-    // localStorage.setItem('userData', JSON.stringify(userData));
-    router.push('/menu');
+
+    try {
+      // Store user in Firestore
+      const docRef = await addDoc(collection(db, 'users'), {
+        name,
+        phone,
+        createdAt: new Date()
+      });
+
+      // Store in localStorage
+      localStorage.setItem('userData', JSON.stringify({
+        userId: docRef.id,
+        mobile:phone,
+        userName: name
+      }));
+
+      // Redirect to menu
+      router.push('/menu');
+    } catch (err) {
+      console.error('Error adding user:', err);
+      alert('Failed to log in. Try again.');
+    }
   };
 
   return (
@@ -65,8 +86,7 @@ export default function Home() {
       
         {/* Special Card */}
         <div className="w-full max-w-md bg-gradient-to-r from-yellow-100 to-green-100 rounded-xl p-4 mt-6 text-center">
-          <div className="flex justify-center mb-2">
-            {/* <img src="/biryani-icon.png" alt="dish" className="w-10 h-10" /> */}
+          <div className="flex justify-center mb-2">            
           </div>
           <h2 className="font-semibold text-lg">Chefs Special Today</h2>
           <p className="text-sm mt-1">Aromatic Hyderabadi Biryani with tender mutton and fragrant basmati rice</p>

@@ -8,6 +8,7 @@ import { db } from "../../../firebase"; // Adjust path accordingly
 export default function MenuPage() {
   const router = useRouter();
   const [user, setUser] = useState<{
+    userID:string;
     tableCode: number;
     userName: string;
   } | null>(null);
@@ -30,6 +31,9 @@ const [menuItems, setMenuItems] = useState<any[]>([]);
 // }, []);
 
 useEffect(() => {
+    const stored = localStorage.getItem("userData");
+  if (stored) setUser(JSON.parse(stored));
+  
     const fetchMenu = async () => {
       try {
         const menuRef = collection(db, "restaurants", "bbq_in", "menu");
@@ -48,6 +52,15 @@ useEffect(() => {
     };
 
     fetchMenu();
+
+    const storedCart = localStorage.getItem("orderCart");
+  if (storedCart) {
+    const parsed = JSON.parse(storedCart) as CartItem[];
+    const cartMap: Record<number, CartItem> = Object.fromEntries(
+      parsed.map((item) => [item.id, item])
+    );
+    setCart(cartMap);
+  }
   }, []);
 
   const toggleExpand = (id: number) => {
@@ -63,12 +76,13 @@ useEffect(() => {
     });
   };
 
-  type CartItem = {
+  type CartItem = {    
   id: number;
   name: string;
   price: number;
   count: number;
-  category: string;
+  status:string;
+  dish_type: string;
   addedBy: string;
   total: number;
   customization?: string;
@@ -78,8 +92,8 @@ useEffect(() => {
   const [cart, setCart] = useState<Record<number, CartItem>>({});
 
   const categoryTotals = Object.values(cart).reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = 0;
-    acc[item.category] += item.total;
+    if (!acc[item.dish_type]) acc[item.dish_type] = 0;
+    acc[item.dish_type] += item.total;
     return acc;
   }, {} as Record<string, number>);
 
@@ -93,15 +107,17 @@ useEffect(() => {
   setCart((prev) => {
     const existing = prev[item.id];
     const count = existing ? existing.count + 1 : 1;
-
+    console.log(user?.userName)
     const updated: Record<number, CartItem> = {
-      ...prev,
-      [item.id]: {
+      ...prev,      
+      [item.id]: {        
         id: item.id,
         name: item.name,
         price: item.price,
-        category: item.category,
+        dish_type: item.dish_type,
         count,
+        status:"ordered",
+        customization: item.customization || "",
         addedBy: user?.userName || "Guest",
         total: item.price * count,
       },
@@ -199,8 +215,7 @@ useEffect(() => {
                     >
                       ❌
                     </button>
-                    {/* <img
-                      src="/biryani-banner.jpg"
+                    {/* <img                      
                       alt={item.name}
                       className="rounded-xl mb-3 h-40 w-full object-cover"
                     /> */}
