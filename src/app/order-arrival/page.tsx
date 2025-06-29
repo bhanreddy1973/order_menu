@@ -57,6 +57,7 @@ export default function OrderArrival() {
   };
 
   const placeOrder = () => {
+    router.push("/order-confirmation");
     localStorage.setItem('orderCart', JSON.stringify(items));
     alert('Order placed successfully!');
     // router.push('/order-confirmation');
@@ -130,11 +131,11 @@ export default function OrderArrival() {
 function SortableItem({ item }: { item: OrderItem }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-  console.log('drag transform:', transform);
+  // const style = {
+  //   transform: CSS.Transform.toString(transform),
+  //   transition,
+  // };
+  // console.log('drag transform:', transform);
 
   return (
     <div

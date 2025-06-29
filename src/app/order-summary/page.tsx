@@ -51,6 +51,7 @@ export default function OrderSummary() {
   // }
   async function addOrder() {
   try {
+    console.log(grouped)
     const docRef = await addDoc(collection(db, "restaurants","bbq_in","orders"), {
       ...grouped,
       userID: user?.userId,

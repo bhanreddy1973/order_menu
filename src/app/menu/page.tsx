@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { foodItems } from "@/data/foodItem";
+// import { foodItems } from "@/data/foodItem";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../firebase"; // Adjust path accordingly
 
@@ -12,10 +12,29 @@ export default function MenuPage() {
     tableCode: number;
     userName: string;
   } | null>(null);
-  const [expandedIds, setExpandedIds] = useState<number[]>([]); // allow multiple expanded
-  const [activeTabs, setActiveTabs] = useState<Record<number, string>>({});
+
+  type MenuItem = {
+  id: string;
+  name: string;
+  price: number;
+  dish_type: string;  
+  spicy: boolean;
+  rating: number;
+  count?: number;
+  status?: string;
+  customization?: string;
+  calories?: number;
+  carbs?: number;
+  protein?: number;
+  fat?: number;
+  addedBy?: string;
+  total?: number;
+  prep_time?: string; // Assuming this is the preparation time
+};
+  const [expandedIds, setExpandedIds] = useState<string[]>([]); // allow multiple expanded
+  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
   const [selectedCategory, setSelectedCategory] = useState("Main Course"); // default or 'All'
-const [menuItems, setMenuItems] = useState<any[]>([]);
+const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 // useEffect(() => {
 //   const stored = localStorage.getItem("userData");
 //   if (stored) setUser(JSON.parse(stored));
@@ -37,13 +56,27 @@ useEffect(() => {
     const fetchMenu = async () => {
       try {
         const menuRef = collection(db, "restaurants", "bbq_in", "menu");
-        console.log(menuRef)
+        
         const snapshot = await getDocs(menuRef);
 
-        const items = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+         const items: MenuItem[] = snapshot.docs.map(doc => {
+      const data = doc.data();
+
+      return {
+        id: doc.id,
+        name: data.name,
+        price: data.price,
+        dish_type: data.dish_type,        
+        spicy: data.spicy,
+        rating: data.rating,
+        prep_time:data.prep_time,
+        calories: data.calories || 0, // optional
+        carbs: data.carbs || 0, // optional
+        protein: data.protein || 0, // optional
+        fat: data.fat || 0, // optional
+        customization: data.customization || "", // optional
+      };
+    });
         console.log(items)
         setMenuItems(items);
       } catch (error) {
@@ -63,7 +96,7 @@ useEffect(() => {
   }
   }, []);
 
-  const toggleExpand = (id: number) => {
+  const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
       const isExpanded = prev.includes(id);
       const newArr = isExpanded ? prev.filter((x) => x !== id) : [...prev, id];
@@ -76,60 +109,126 @@ useEffect(() => {
     });
   };
 
-  type CartItem = {    
-  id: number;
+ type CartItem = {
+  id: string;
   name: string;
   price: number;
-  count: number;
-  status:string;
   dish_type: string;
+  count: number;
+  status: string;
   addedBy: string;
   total: number;
   customization?: string;
 };
   
 
-  const [cart, setCart] = useState<Record<number, CartItem>>({});
+  const [cart, setCart] = useState<Record<string, CartItem>>({});
 
-  const categoryTotals = Object.values(cart).reduce((acc, item) => {
-    if (!acc[item.dish_type]) acc[item.dish_type] = 0;
-    acc[item.dish_type] += item.total;
-    return acc;
-  }, {} as Record<string, number>);
+  // const categoryTotals = Object.values(cart).reduce((acc, item) => {
+  //   if (!acc[item.dish_type]) acc[item.dish_type] = 0;
+  //   acc[item.dish_type] += item.total;
+  //   return acc;
+  // }, {} as Record<string, number>);
 
   const visibleItems =
     selectedCategory === "All"
       ? menuItems
       : menuItems.filter((item) => item.dish_type === selectedCategory);
 
-      type IncomingItem = Omit<CartItem, 'count' | 'addedBy' | 'total'>;
- const increaseItem = (item: IncomingItem) => {
-  setCart((prev) => {
+      // type IncomingItem = Omit<CartItem, 'count' | 'addedBy' | 'total'>;
+//  const increaseItem = (item: IncomingItem) => {
+//   setCart((prev) => {
+//     const existing = prev[item.id];
+//     const count = existing ? existing.count + 1 : 1;
+//     console.log(user?.userName)
+//     const updated: Record<number, CartItem> = {
+//       ...prev,      
+//       [item.id]: {        
+//         id: item.id,
+//         name: item.name,
+//         price: item.price,
+//         dish_type: item.dish_type,
+//         count,
+//         status:"ordered",
+//         customization: item.customization || "",
+//         addedBy: user?.userName || "Guest",
+//         total: item.price * count,
+//       },
+//     };
+
+//     localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
+//     return updated;
+//   });
+// };
+
+const increaseItem = (item: MenuItem) => {
+  setCart(prev => {
     const existing = prev[item.id];
     const count = existing ? existing.count + 1 : 1;
-    console.log(user?.userName)
-    const updated: Record<number, CartItem> = {
-      ...prev,      
-      [item.id]: {        
+    const name = item.name;
+    const price = item.price;
+    const dish_type = item.dish_type;
+    const addedBy = user!.userName;
+    const calories = item.calories || 0; // optional
+    const carbs = item.carbs || 0; // optional  
+    const protein = item.protein || 0; // optional
+    const fat = item.fat || 0; // optional
+    const prep_time = item?.prep_time; // Assuming time is the preparation time
+    console.log(prep_time)
+    const updated = {
+      ...prev,
+      [item.id]: {
         id: item.id,
-        name: item.name,
-        price: item.price,
-        dish_type: item.dish_type,
+        name,
+        price,
+        dish_type,
         count,
-        status:"ordered",
-        customization: item.customization || "",
-        addedBy: user?.userName || "Guest",
-        total: item.price * count,
-      },
+        status: "ordered",
+        prep_time,
+        addedBy,
+        calories,
+        carbs,
+        protein,
+        fat,
+        total: price * count,
+        customization: existing?.customization || ""
+      }
     };
-
     localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
     return updated;
   });
 };
 
 
-  const decreaseItem = (item: IncomingItem) => {
+//   const decreaseItem = (item: IncomingItem) => {
+//   setCart((prev) => {
+//     const existing = prev[item.id];
+//     if (!existing || existing.count <= 1) {
+//       const newCart = { ...prev };
+//       delete newCart[item.id];
+//       localStorage.setItem("orderCart", JSON.stringify(Object.values(newCart)));
+//       return newCart;
+//     }
+
+//     const count = existing.count - 1;
+
+//     const updated: Record<number, CartItem> = {
+//       ...prev,
+//       [item.id]: {
+//         ...existing,
+//         count,
+//         total: item.price * count,
+//       },
+//     };
+
+//     localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
+//     return updated;
+//   });
+// };
+
+
+
+const decreaseItem = (item: MenuItem) => {
   setCart((prev) => {
     const existing = prev[item.id];
     if (!existing || existing.count <= 1) {
@@ -141,7 +240,7 @@ useEffect(() => {
 
     const count = existing.count - 1;
 
-    const updated: Record<number, CartItem> = {
+    const updated: Record<string, CartItem> = {
       ...prev,
       [item.id]: {
         ...existing,
@@ -156,7 +255,7 @@ useEffect(() => {
 };
 
 
-  const isInCart = (id: number) => !!cart[id];
+  const isInCart = (id: string) => !!cart[id];
 
   return (
     <div className="min-h-screen bg-white px-4 py-6 text-gray-900 pb-24">
@@ -229,7 +328,7 @@ useEffect(() => {
                   </div>
 
                   <p className="text-xs text-gray-600 mt-1">
-                    ⏱ {item.time} mins • {item.spicy ? "🌶 Spicy" : "🧈 Mild"} •
+                    ⏱ {item.prep_time} • {item.spicy ? "🌶 Spicy" : "🧈 Mild"} •
                     ⭐ {item.rating} • 🍽 2 serves
                   </p>
 
@@ -368,7 +467,7 @@ useEffect(() => {
                   <div>
                     <h3 className="font-semibold">{item.name}</h3>
                     <p className="text-xs text-gray-500 mt-1">
-                      ⏱ {item.time} mins • {item.spicy ? "🌶 Spicy" : "🧈 Mild"}{" "}
+                      ⏱ {item.prep_time} • {item.spicy ? "🌶 Spicy" : "🧈 Mild"}{" "}
                       • ⭐ {item.rating} • 🍽 2 serves
                     </p>
                   </div>
