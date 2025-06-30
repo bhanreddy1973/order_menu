@@ -35,6 +35,7 @@ export default function MenuPage() {
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
   const [selectedCategory, setSelectedCategory] = useState("Main Course"); // default or 'All'
 const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+const [restaurantName, setRestaurantName] = useState<string>("");
 // useEffect(() => {
 //   const stored = localStorage.getItem("userData");
 //   if (stored) setUser(JSON.parse(stored));
@@ -51,11 +52,17 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
 useEffect(() => {
     const stored = localStorage.getItem("userData");
+    const restaurantName = localStorage.getItem("restaurantName") || ""; // Ensure it's a string
+    setRestaurantName(restaurantName);
   if (stored) setUser(JSON.parse(stored));
   
     const fetchMenu = async () => {
       try {
-        const menuRef = collection(db, "restaurants", "bbq_in", "menu");
+        if (!restaurantName) {
+          console.error("No restaurant name found in localStorage.");
+          return;
+        }
+        const menuRef = collection(db, "restaurants", restaurantName, "menu");
         
         const snapshot = await getDocs(menuRef);
 
@@ -261,7 +268,7 @@ const decreaseItem = (item: MenuItem) => {
     <div className="min-h-screen bg-white px-4 py-6 text-gray-900 pb-24">
       {/* Top Bar */}
       <div className="flex items-center justify-between mb-4">
-        <h1 className="font-bold text-lg">🍖 BBQ Inn</h1>
+        <h1 className="font-bold text-lg">{restaurantName}</h1>
         <div className="text-right text-sm">
           <p className="text-gray-600">table code</p>
           <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">

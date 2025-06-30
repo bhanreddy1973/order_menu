@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, setDoc } from "firebase/firestore";
-import { db } from "../../../firebase"; // Adjust path accordingly
-import { foodItems } from "@/data/foodItem";
+// import { collection, doc, setDoc } from "firebase/firestore";
+// import { db } from "../../../firebase"; // Adjust path accordingly
+// import { foodItems } from "@/data/foodItem";
 
 type OrderItem = {
   id: string;
@@ -19,19 +19,22 @@ type OrderItem = {
 export default function OrderConfirmationPage() {
   const router = useRouter();
   const [items, setItems] = useState<OrderItem[]>([]);
+const [restaurantName, setRestaurantName] = useState<string>("");
 
-  async function uploadMenu() {
-  const menuRef = collection(db, "restaurants", "bbq_in", "menu");
+//   async function uploadMenu() {
+//   const menuRef = collection(db, "restaurants", "bbq_in", "menu");
 
-  for (const item of foodItems) {
-    const docRef = doc(menuRef); // auto-generated ID
-    await setDoc(docRef, item);
-    console.log(`✅ Uploaded: ${item.name}`);
-  }  
-}
+//   for (const item of foodItems) {
+//     const docRef = doc(menuRef); // auto-generated ID
+//     await setDoc(docRef, item);
+//     console.log(`✅ Uploaded: ${item.name}`);
+//   }  
+// }
 
   useEffect(() => {
     const stored = localStorage.getItem('orderCart');
+    const restaurantName = localStorage.getItem('restaurantName') || '';
+    setRestaurantName(restaurantName);
     if (stored) setItems(JSON.parse(stored));
   }, []);
 
@@ -42,12 +45,12 @@ export default function OrderConfirmationPage() {
     <div className="min-h-screen px-4 pt-4 pb-28 bg-white text-gray-900">
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
-        <h1 className="text-base font-bold">🍽️ BBQ Inn</h1>
+        <h1 className="text-base font-bold">{restaurantName}</h1>
         <div className="text-right text-xs">
           <p className="text-gray-500">table code</p>
-          <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded font-semibold text-sm">
+          {/* <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded font-semibold text-sm">
             {JSON.parse(localStorage.getItem('userData') || '{}').tableCode}
-          </span>
+          </span> */}
         </div>
       </div>
 

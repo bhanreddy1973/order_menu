@@ -34,7 +34,8 @@ type OrderItem = {
 export default function OrderArrival() {
   const router = useRouter();
   const [items, setItems] = useState<OrderItem[]>([]);
-  
+  const [restaurantName, setRestaurantName] = useState<string>("");
+
   const sensors = useSensors(
   useSensor(PointerSensor),
   useSensor(TouchSensor)
@@ -42,6 +43,8 @@ export default function OrderArrival() {
 
   useEffect(() => {
     const stored = localStorage.getItem('orderCart');
+    const restaurantName = localStorage.getItem('restaurantName') || '';
+    setRestaurantName(restaurantName);
     if (stored) {
       setItems(JSON.parse(stored));
     }
@@ -67,7 +70,7 @@ export default function OrderArrival() {
     <div className="min-h-screen bg-white px-4 pt-4 pb-28">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold text-black">🍽️ BBQ Inn</h1>
+        <h1 className="text-xl font-bold text-black">{restaurantName}</h1>
         <div className="text-sm text-right">
           <p className="text-gray-500">table code</p>
           <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">

@@ -15,8 +15,11 @@ type OrderCartItem = {
 export default function NutritionInfoPage() {
   const router = useRouter();
   const [totals, setTotals] = useState({ calories: 0, carbs: 0, protein: 0, fat: 0 });
+  const [restaurantName, setRestaurantName] = useState<string>("");
 
   useEffect(() => {
+    const restaurantName = localStorage.getItem('restaurantName') || '';
+    setRestaurantName(restaurantName);
     const raw = localStorage.getItem('orderCart');
     if (!raw) return;
     const cart: OrderCartItem[] = JSON.parse(raw);
@@ -34,12 +37,12 @@ export default function NutritionInfoPage() {
     <div className="min-h-screen bg-white px-4 pt-4 pb-24 text-gray-900">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-lg font-bold">🍽️ BBQ Inn</h1>
+        <h1 className="text-lg font-bold">{restaurantName}</h1>
         <div className="text-xs text-right">
           <p className="text-gray-500">table code</p>
-          <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">
+          {/* <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">
             {JSON.parse(localStorage.getItem('userData') || '{}').tableCode}
-          </span>
+          </span> */}
         </div>
       </div>
 

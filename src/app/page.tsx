@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect,useState } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase'; // adjust path based on your structure
 // import { authenticateUser } from '@utils/authService';
@@ -12,7 +12,24 @@ export default function Home() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const router = useRouter();
+  const [restaurantName, setRestaurantName] = useState<string>("");
 
+  useEffect(() => {
+    const queryString = window.location.search;
+
+// Create a URLSearchParams object
+const urlParams = new URLSearchParams(queryString);
+
+// Access specific parameters
+const restaurantName = urlParams.get('restaurant_name'); // "ABC"
+const table = urlParams.get('table'); // "5"
+console.log('Restaurant ID:', restaurantName);
+localStorage.setItem('restaurantName', restaurantName || ''); // Default to 'bbq_in' if not found
+setRestaurantName(restaurantName || '');
+localStorage.setItem('tableNo', table || '');
+console.log('Table:', table);
+
+  }, []);
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -42,7 +59,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
     <main className="min-h-screen flex flex-col items-center justify-start bg-white text-gray-800 px-4 py-6">
       <div className="w-full bg-gradient-to-b from-orange-500 to-orange-300 rounded-b-3xl pb-10 text-center">
-        <h1 className="text-2xl font-bold text-white mt-6">Welcome to BBQ Inn</h1>
+        <h1 className="text-2xl font-bold text-white mt-6">Welcome to {restaurantName}</h1>
         <p className="text-white text-sm mt-2">To Personalise your experience,<br />Please share a few Details</p>
       </div>
 

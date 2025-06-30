@@ -21,9 +21,12 @@ export default function OrderSummary() {
     userName: string;
   } | null>(null);
   const router = useRouter();
+  const [restaurantName, setRestaurantName] = useState<string>("");
   
   useEffect(() => {
     const storedUser = localStorage.getItem("userData");
+    const restaurantName = localStorage.getItem('restaurantName') || '';
+    setRestaurantName(restaurantName);
     if (storedUser) setUser(JSON.parse(storedUser));
 
     const storedCart = localStorage.getItem("orderCart");
@@ -52,7 +55,7 @@ export default function OrderSummary() {
   async function addOrder() {
   try {
     console.log(grouped)
-    const docRef = await addDoc(collection(db, "restaurants","bbq_in","orders"), {
+    const docRef = await addDoc(collection(db, "restaurants",restaurantName,"orders"), {
       ...grouped,
       userID: user?.userId,
       status: "pending",
@@ -73,7 +76,7 @@ export default function OrderSummary() {
       {/* Top Info */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="font-bold text-lg">📍 BBQ Inn</h1>
+          <h1 className="font-bold text-lg">{restaurantName}</h1>
           <h2 className="text-xl font-semibold mt-2">Order Summary</h2>
         </div>
         <div className="text-right text-sm">
