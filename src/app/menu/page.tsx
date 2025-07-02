@@ -4,6 +4,26 @@ import { useRouter } from "next/navigation";
 // import { foodItems } from "@/data/foodItem";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../../firebase"; // Adjust path accordingly
+import { FaBell, FaHome, FaUtensils, FaReceipt } from 'react-icons/fa';
+import BottomNav from "../../components/BottomNav";
+import BannerCarousel from "../../components/BannerCarousel";
+
+type CartItem = {
+  id: string;
+  name: string;
+  price: number;
+  dish_type: string;
+  count: number;
+  status: string;
+  addedBy: string;
+  total: number;
+  customization?: string;
+  prep_time?: string;
+  calories?: number;
+  carbs?: number;
+  protein?: number;
+  fat?: number;
+};
 
 export default function MenuPage() {
   const router = useRouter();
@@ -14,28 +34,39 @@ export default function MenuPage() {
   } | null>(null);
 
   type MenuItem = {
-  id: string;
-  name: string;
-  price: number;
-  dish_type: string;  
-  spicy: boolean;
-  rating: number;
-  count?: number;
-  status?: string;
-  customization?: string;
-  calories?: number;
-  carbs?: number;
-  protein?: number;
-  fat?: number;
-  addedBy?: string;
-  total?: number;
-  prep_time?: string; // Assuming this is the preparation time
-};
-  const [expandedIds, setExpandedIds] = useState<string[]>([]); // allow multiple expanded
-  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
-  const [selectedCategory, setSelectedCategory] = useState("Main Course"); // default or 'All'
+    id: string;
+    name: string;
+    price: number;
+    dish_type: string;
+    spicy: boolean;
+    rating: number;
+    count?: number;
+    status?: string;
+    customization?: string;
+    calories?: number;
+    carbs?: number;
+    protein?: number;
+    fat?: number;
+    addedBy?: string;
+    total?: number;
+    prep_time?: string; // Assuming this is the preparation time
+    image?: string;
+    cuisine?: string;
+    ingredients?: string;
+    allergens?: string;
+  };
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("All"); // default to 'All'
 const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-const [restaurantName, setRestaurantName] = useState<string>("");
+const [cart, setCart] = useState<Record<string, CartItem>>(() => {
+    const storedCart = localStorage.getItem("orderCart");
+    if (storedCart) {
+      const parsed = JSON.parse(storedCart) as CartItem[];
+      return Object.fromEntries(parsed.map((item) => [item.id, item]));
+    }
+    return {};
+  });
+
 // useEffect(() => {
 //   const stored = localStorage.getItem("userData");
 //   if (stored) setUser(JSON.parse(stored));
@@ -52,41 +83,39 @@ const [restaurantName, setRestaurantName] = useState<string>("");
 
 useEffect(() => {
     const stored = localStorage.getItem("userData");
-    const restaurantName = localStorage.getItem("restaurantName") || ""; // Ensure it's a string
-    setRestaurantName(restaurantName);
-  if (stored) setUser(JSON.parse(stored));
+    const restaurantNameFromStorage = localStorage.getItem("restaurantName");
+    if (!restaurantNameFromStorage) {
+      // Professional user-friendly warning and redirect
+      alert("Restaurant not selected. Please start from the home page.");
+      router.push("/");
+      return;
+    }
+    if (stored) setUser(JSON.parse(stored));
   
     const fetchMenu = async () => {
       try {
-        if (!restaurantName) {
-          console.error("No restaurant name found in localStorage.");
-          return;
-        }
-        const menuRef = collection(db, "restaurants", restaurantName, "menu");
-        
+        const menuRef = collection(db, "restaurants", restaurantNameFromStorage, "menu");
         const snapshot = await getDocs(menuRef);
-
-         const items: MenuItem[] = snapshot.docs.map(doc => {
-      const data = doc.data();
-
-      return {
-        id: doc.id,
-        name: data.name,
-        price: data.price,
-        dish_type: data.dish_type,        
-        spicy: data.spicy,
-        rating: data.rating,
-        prep_time:data.prep_time,
-        calories: data.calories || 0, // optional
-        carbs: data.carbs || 0, // optional
-        protein: data.protein || 0, // optional
-        fat: data.fat || 0, // optional
-        customization: data.customization || "", // optional
-      };
-    });
-        console.log(items)
+        const items: MenuItem[] = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            price: data.price,
+            dish_type: data.dish_type,        
+            spicy: data.spicy,
+            rating: data.rating,
+            prep_time:data.prep_time,
+            calories: data.calories || 0, // optional
+            carbs: data.carbs || 0, // optional
+            protein: data.protein || 0, // optional
+            fat: data.fat || 0, // optional
+            customization: data.customization || "", // optional
+          };
+        });
         setMenuItems(items);
       } catch (error) {
+        alert("Error fetching menu. Please try again later.");
         console.error("Error fetching menu:", error);
       }
     };
@@ -102,40 +131,6 @@ useEffect(() => {
     setCart(cartMap);
   }
   }, []);
-
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const isExpanded = prev.includes(id);
-      const newArr = isExpanded ? prev.filter((x) => x !== id) : [...prev, id];
-      return newArr;
-    });
-
-    setActiveTabs((prev) => {
-      if (!prev[id]) return { ...prev, [id]: "Ingredients" };
-      return prev;
-    });
-  };
-
- type CartItem = {
-  id: string;
-  name: string;
-  price: number;
-  dish_type: string;
-  count: number;
-  status: string;
-  addedBy: string;
-  total: number;
-  customization?: string;
-};
-  
-
-  const [cart, setCart] = useState<Record<string, CartItem>>({});
-
-  // const categoryTotals = Object.values(cart).reduce((acc, item) => {
-  //   if (!acc[item.dish_type]) acc[item.dish_type] = 0;
-  //   acc[item.dish_type] += item.total;
-  //   return acc;
-  // }, {} as Record<string, number>);
 
   const visibleItems =
     selectedCategory === "All"
@@ -262,306 +257,120 @@ const decreaseItem = (item: MenuItem) => {
 };
 
 
-  const isInCart = (id: string) => !!cart[id];
+  const handleCustomization = (id: string, value: string) => {
+    setCart((prev) => {
+      if (!prev[id]) return prev;
+      const updated = {
+        ...prev,
+        [id]: {
+          ...prev[id],
+          customization: value,
+        },
+      };
+      localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
+      return updated;
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-white px-4 py-6 text-gray-900 pb-24">
+    <div className="min-h-screen bg-white pb-32">
       {/* Top Bar */}
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="font-bold text-lg">{restaurantName}</h1>
-        <div className="text-right text-sm">
-          <p className="text-gray-600">table code</p>
-          <span className="bg-green-100 text-green-700 px-2 py-1 rounded font-semibold">
-            {user?.tableCode}
-          </span>
+      <div className="flex items-center justify-between px-4 pt-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">📍</span>
+          <span className="font-bold text-xl text-gray-900">{localStorage.getItem('restaurantName') || 'BBQ Inn'}</span>
+        </div>
+        <div className="text-right text-xs">
+          <span className="font-bold text-gray-900">table code</span>
+          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold ml-1 text-base">{user?.tableCode || '----'}</span>
           <br />
-          <span className="font-semibold">{user?.userName}</span>
+          <span className="font-semibold text-sm text-gray-900 flex items-center gap-1"><span className="text-lg">👤</span>{user?.userName || 'Guest'}</span>
         </div>
       </div>
 
-      <h2 className="text-lg font-semibold mb-3">Start adding your meals!</h2>
+      {/* Banner/Carousel */}
+      <BannerCarousel />
 
-      {/* Categories */}
-      <div className="flex space-x-2 overflow-x-auto pb-3">
-        {["All", "Starters", "Main Course", "Dessert"].map((cat) => (
+      {/* Section Title */}
+      <h2 className="text-2xl font-extrabold text-gray-900 mt-6 mb-3 px-4">Start adding your meals!</h2>
+
+      {/* Category Filters */}
+      <div className="flex gap-2 px-4 overflow-x-auto mb-4">
+        {['All', 'Starters', 'Main Course', 'Dessert'].map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-1 rounded-full border text-sm transition ${
-              selectedCategory === cat
-                ? "bg-green-600 text-white border-green-600"
-                : "border-gray-300 text-gray-600"
-            }`}
+            className={`px-4 py-1 rounded-full border font-semibold text-base transition ${selectedCategory === cat ? 'bg-green-600 text-white border-green-600' : 'bg-white text-gray-700 border-gray-300'}`}
           >
             {cat}
           </button>
         ))}
-
-        <button className="ml-auto px-3 border rounded-lg">🔍</button>
-        <button className="px-3 border rounded-lg">⬇️</button>
+        <button className={`px-2 py-1 rounded-full border text-lg ${false ? 'bg-green-600 text-white border-green-600' : 'text-gray-600 border-gray-300'}`} title="Sort"><span className="text-lg">⇅</span></button>
+        <button className={`px-2 py-1 rounded-full border text-lg ${false ? 'bg-green-600 text-white border-green-600' : 'text-gray-600 border-gray-300'}`} title="Filter"><span className="text-lg">☰</span></button>
       </div>
 
-      {/* Food List */}
-      <div className="space-y-4 mt-4">
-        {visibleItems.map((item) => {
-          const isExpanded = expandedIds.includes(item.id);
-          const tab = activeTabs[item.id];
-          return (
-            <div
-              key={item.id}
-              className="relative  bg-gray-50 border rounded-xl p-4 transition-all duration-300"
-            >
-              {/* Expanded Card */}
-              {isExpanded ? (
+      {/* Menu List */}
+      <div className="mt-2 space-y-6 px-4">
+        {visibleItems.map((item) => (
+          <div key={item.id} className="bg-white rounded-2xl shadow p-0 overflow-hidden">
+            <img src={item.image || '/banner.jpg'} alt={item.name} className="w-full h-48 object-cover" />
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-lg text-gray-900">{item.name}</span>
+                <span className="font-bold text-lg text-gray-900">₹{item.price}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-gray-700 mb-2">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block"></span>{item.prep_time || '18 mins'}</span>
+                <span>• {item.spicy ? 'Spicy' : 'Mild'}</span>
+                <span>• {item.cuisine || 'Indian'}</span>
+                <span>• 2 serves</span>
+                <span>• {item.rating || '4.5'} <span className="text-yellow-500">★</span></span>
+              </div>
+              {expandedItemId === item.id ? (
                 <>
-                  <div className="relative">
-                    <button
-                      onClick={() => toggleExpand(item.id)}
-                      className="absolute top-0 right-0 text-gray-500 text-sm"
-                    >
-                      ❌
-                    </button>
-                    {/* <img                      
-                      alt={item.name}
-                      className="rounded-xl mb-3 h-40 w-full object-cover"
-                    /> */}
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <h2 className="font-bold text-lg">{item.name}</h2>
-                    <p className="text-right font-bold text-green-800">
-                      ₹{item.price}
-                    </p>
-                  </div>
-
-                  <p className="text-xs text-gray-600 mt-1">
-                    ⏱ {item.prep_time} • {item.spicy ? "🌶 Spicy" : "🧈 Mild"} •
-                    ⭐ {item.rating} • 🍽 2 serves
-                  </p>
-
-                  {/* Tab Buttons */}
-                  <div className="flex gap-2 mt-4 flex-wrap text-sm">
-                    {[
-                      "Ingredients",
-                      "Allergen Info",
-                      "Preparation",
-                      "Nutritional Values",
-                    ].map((label) => (
-                      <button
-                        key={label}
-                        onClick={() =>
-                          setActiveTabs((prev) => ({
-                            ...prev,
-                            [item.id]: label,
-                          }))
-                        }
-                        className={`px-3 py-1 rounded-full border transition ${
-                          tab === label
-                            ? "bg-green-600 text-white border-green-600"
-                            : "bg-white text-gray-700 border-gray-300"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Tab Content */}
-                  {/* <div className="mt-4 mb-4 text-sm text-gray-700">
-                    {tab === "Ingredients" && (
-                      <div className="flex flex-wrap gap-2">
-                        {item.details.ingredients.slice(0, 6).map((ing, i) => (
-                          <span
-                            key={i}
-                            className="bg-gray-100 px-2 py-1 rounded text-xs truncate max-w-[120px]"
-                          >
-                            {ing}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {tab === "Allergen Info" && (
-                      <div className="flex flex-wrap gap-2">
-                        {item.details.allergens.map((a, i) => (
-                          <span
-                            key={i}
-                            className="bg-yellow-100 px-2 py-1 rounded text-xs"
-                          >
-                            ⚠️ {a}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {tab === "Preparation" && (
-                      <p className="text-xs text-gray-600 truncate">
-                        {item.details.preparation}
-                      </p>
-                    )}
-
-                    {tab === "Nutritional Values" && (
-                      <div className="flex flex-wrap gap-4 text-xs text-gray-700">
-                        <span>🔥 {item.details.nutrition.calories}</span>
-                        <span>💪 {item.details.nutrition.protein}</span>
-                        <span>🥖 {item.details.nutrition.carbs}</span>
-                        <span>🧈 {item.details.nutrition.fat}</span>
-                      </div>
-                    )}
-                  </div> */}
-
-                  {isInCart(item.id) && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium mb-1">
-                        Customizations
-                      </label>
-                      <textarea
-                        placeholder="Ex: More onions, less spicy etc"
-                        className="w-full border rounded-lg p-2 text-sm"
-                        rows={2}
-                        value={cart[item.id]?.customization || ""}
-                        onChange={(e) => {
-                          const text = e.target.value;
-                          setCart((prev) => ({
-                            ...prev,
-                            [item.id]: {
-                              ...prev[item.id],
-                              customization: text,
-                            },
-                          }));
-                        }}
-                      ></textarea>
-                      <button className="mt-2 bg-green-600 text-white px-4 py-2 rounded text-sm">
-                        Done
-                      </button>
-                    </div>
-                  )}
-                  <div className="absolute bottom-4 right-4">
-                    {isInCart(item.id) ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => decreaseItem(item)}
-                          className="bg-red-500 text-white px-2 rounded text-sm"
-                        >
-                          −
-                        </button>
-                        <span className="font-medium">
-                          {cart[item.id].count}
-                        </span>
-                        <button
-                          onClick={() => increaseItem(item)}
-                          className="bg-green-600 text-white px-2 rounded text-sm"
-                        >
-                          +
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => increaseItem(item)}
-                        className="bg-green-600 text-white px-3 py-1 rounded mt-4 text-sm"
-                      >
-                        Add
-                      </button>
-                    )}
+                  <div className="text-gray-800 text-sm mb-2">Aromatic {item.name} infused with fragrant spices. Read more...</div>
+                  <div className="text-xs text-gray-700 mb-1">Ingredients: {item.ingredients || 'Basmati rice, chicken, onions, tomatoes, yogurt, ginger, garlic, biryani masala, mint, coriander.'}</div>
+                  <div className="text-xs text-gray-700 mb-1">Allergen Info: {item.allergens || 'Dairy, gluten (if served with naan), nuts (optional garnish).'}</div>
+                  <div className="text-xs text-gray-700">A flavorful, layered rice dish inspired by traditional Indian kitchens.</div>
+                  <div className="flex justify-end mt-3">
+                    <button className="bg-green-600 text-white px-4 py-1 rounded-full text-sm font-semibold" onClick={() => setExpandedItemId(null)}>Close</button>
                   </div>
                 </>
               ) : (
-                /* Minimized Card */
-                <div
-                  className="flex justify-between items-center cursor-pointer"
-                  onClick={() => toggleExpand(item.id)}
-                >
-                  <div>
-                    <h3 className="font-semibold">{item.name}</h3>
-                    <p className="text-xs text-gray-500 mt-1">
-                      ⏱ {item.prep_time} • {item.spicy ? "🌶 Spicy" : "🧈 Mild"}{" "}
-                      • ⭐ {item.rating} • 🍽 2 serves
-                    </p>
-                  </div>
-                  <div
-                    className="text-right"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <p className="font-bold text-gray-800">₹{item.price}</p>
-                    {isInCart(item.id) ? (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => decreaseItem(item)}
-                          className="bg-red-500 text-white px-2 rounded text-sm"
-                        >
-                          −
-                        </button>
-                        <span className="font-medium">
-                          {cart[item.id].count}
-                        </span>
-                        <button
-                          onClick={() => increaseItem(item)}
-                          className="bg-green-600 text-white px-2 rounded text-sm"
-                        >
-                          +
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => increaseItem(item)}
-                        className="bg-green-600 text-white px-3 py-1 rounded mt-1 text-sm"
-                      >
-                        Add
-                      </button>
-                    )}
-                  </div>
+                <div className="flex justify-between items-center mt-2">
+                  <button className="bg-green-600 text-white px-6 py-1 rounded-full text-base font-semibold" onClick={() => increaseItem(item)}>Add</button>
+                  <button className="text-green-700 underline text-sm font-semibold" onClick={() => setExpandedItemId(item.id)}>Details</button>
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
-      {/* Order Summary Sticky Bar (ABOVE bottom nav) */}
-      <div className="fixed bottom-14 left-0 right-0 bg-white border-t p-4 flex justify-between items-center z-50 shadow-inner rounded-t-lg">
-        <div>
-          <h4 className="font-bold text-lg">Order Summary</h4>
-          <div className="text-sm">
-            {Object.entries(cart).map(
-              ([cat, data]) =>
-                data.count > 0 && (
-                  <p key={cat}>
-                    ₹{data.total} <span className="text-gray-500">{cat}</span>
-                  </p>
-                )
-            )}
           </div>
-        </div>
+        ))}
+      </div>
 
-        <div className="text-right">
+      {/* Floating Bell Button */}
+      <div className="fixed bottom-20 right-4 z-50">
+        <button className="bg-green-700 w-12 h-12 rounded-full text-white text-xl flex items-center justify-center shadow-lg" title="Notifications">
+          <FaBell />
+        </button>
+      </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav />
+
+      {/* Sticky Order Summary Bar */}
+      <div className="fixed bottom-16 left-0 right-0 flex justify-center z-50">
+        <div className="w-full max-w-md mx-auto bg-white border shadow-lg rounded-2xl flex items-center justify-between px-4 py-3">
+          <div>
+            <span className="font-bold text-lg text-gray-900">Order Summary</span>
+            <span className="font-bold text-lg ml-2 text-gray-900">₹{Object.values(cart).reduce((acc, item) => acc + item.total, 0)}</span>
+          </div>
           <button
-            className="bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium mb-1"
+            className="bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-medium"
             onClick={() => router.push("/order-summary")}
           >
             Order
           </button>
-          <p className="text-base font-bold">
-            Total ₹
-            {Object.values(cart).reduce((acc, cat) => acc + cat.total, 0)}
-          </p>
         </div>
-
-        {/* 🔔 Alert Button */}
-        <button className="ml-3 bg-green-700 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
-          🔔
-        </button>
-      </div>
-
-      {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-2 flex justify-around z-50">
-        <button className="flex flex-col items-center text-green-600 font-semibold">
-          🏠<span className="text-xs">Home</span>
-        </button>
-        <button className="flex flex-col items-center text-gray-700">
-          🍽️<span className="text-xs">Menu</span>
-        </button>
-        <button className="flex flex-col items-center text-gray-700">
-          🧾<span className="text-xs">Order</span>
-        </button>
       </div>
     </div>
   );

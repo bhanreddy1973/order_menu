@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 // import { collection, doc, setDoc } from "firebase/firestore";
 // import { db } from "../../../firebase"; // Adjust path accordingly
 // import { foodItems } from "@/data/foodItem";
+import BottomNav from "../../components/BottomNav";
 
 type OrderItem = {
   id: string;
@@ -127,6 +128,7 @@ const [restaurantName, setRestaurantName] = useState<string>("");
           🧾<span className="text-[10px]">Order</span>
         </button>
       </div>
+      <BottomNav />
     </div>
   );
 }

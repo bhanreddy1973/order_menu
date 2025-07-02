@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from '../../../firebase'; // adjust import
 import { collection, addDoc, Timestamp } from "firebase/firestore";
+import BottomNav from "../../components/BottomNav";
 
 type CartItem = {
   id: number;
@@ -25,10 +26,14 @@ export default function OrderSummary() {
   
   useEffect(() => {
     const storedUser = localStorage.getItem("userData");
-    const restaurantName = localStorage.getItem('restaurantName') || '';
-    setRestaurantName(restaurantName);
+    const restaurantNameFromStorage = localStorage.getItem('restaurantName');
+    if (!restaurantNameFromStorage) {
+      alert("Restaurant not selected. Please start from the home page.");
+      router.push("/");
+      return;
+    }
+    setRestaurantName(restaurantNameFromStorage);
     if (storedUser) setUser(JSON.parse(storedUser));
-
     const storedCart = localStorage.getItem("orderCart");
     if (storedCart) setCart(JSON.parse(storedCart));
   }, []);
@@ -53,23 +58,29 @@ export default function OrderSummary() {
   //   console.log(grouped);
   // }
   async function addOrder() {
-  try {
-    console.log(grouped)
-    const docRef = await addDoc(collection(db, "restaurants",restaurantName,"orders"), {
-      ...grouped,
-      userID: user?.userId,
-      status: "pending",
-      createdAt: Timestamp.now()
-    });
-    // console.log("Order added with ID: ", docRef.id);
-    localStorage.setItem("orderId",docRef.id );
-    router.push("/order-arrival")
-    return docRef.id;
-  } catch (e) {
-    console.error("Error adding order: ", e);
-    throw e;
+    if (!restaurantName) {
+      alert("Restaurant not selected. Please start from the home page.");
+      router.push("/");
+      return;
+    }
+    try {
+      console.log(grouped)
+      const docRef = await addDoc(collection(db, "restaurants",restaurantName,"orders"), {
+        ...grouped,
+        userID: user?.userId,
+        status: "pending",
+        createdAt: Timestamp.now()
+      });
+      localStorage.setItem("orderId",docRef.id );
+      localStorage.setItem("orderPlacedAt", Date.now().toString());
+      router.push("/order-arrival")
+      return docRef.id;
+    } catch (e) {
+      alert("Error placing order. Please try again later.");
+      console.error("Error adding order: ", e);
+      throw e;
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-white px-4 pt-6 pb-32 text-gray-900">
@@ -176,6 +187,8 @@ export default function OrderSummary() {
           🧾<span className="text-xs">Order</span>
         </button>
       </div>
+
+      <BottomNav />
     </div>
   );
 }
