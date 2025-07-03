@@ -29,24 +29,98 @@ export default function BannerCarousel() {
   }, []);
 
   return (
-    <div className="relative w-full max-w-md mx-auto mt-4 rounded-2xl overflow-hidden bg-gray-100 shadow h-48">
+    <div
+      style={{
+        width: 384,
+        height: 204,
+        borderRadius: 20,
+        position: 'relative',
+        margin: '1px auto 0 auto',
+        overflow: 'hidden',
+        background: '#F3F4F6',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       {banners.map((banner, idx) => (
         <div
           key={idx}
-          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === current ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: 384,
+            height: 204,
+            opacity: idx === current ? 1 : 0,
+            zIndex: idx === current ? 10 : 0,
+            transition: 'opacity 0.7s ease-in-out',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <img src={banner.image} alt={banner.title} className="object-cover w-full h-full" />
-          <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-end p-6 rounded-2xl">
-            <div className="text-white font-bold text-lg">Restaurant top #1</div>
-            <div className="text-3xl font-extrabold text-white leading-tight">{banner.title}</div>
-            <div className="text-xl font-bold text-white mb-2">{banner.subtitle}</div>
-            <div className="flex gap-1 mb-2">
-              {banners.map((_, dotIdx) => (
-                <span
-                  key={dotIdx}
-                  className={`w-2 h-2 rounded-full ${dotIdx === current ? "bg-white opacity-80" : "bg-white opacity-40"}`}
-                ></span>
-              ))}
+          <div
+            style={{
+              width: 384,
+              height: 172,
+              borderRadius: 20,
+              overflow: 'hidden',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#000',
+            }}
+          >
+            <img
+              src={banner.image}
+              alt={banner.title}
+              style={{
+                objectFit: 'cover',
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                zIndex: 1,
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.6)',
+                borderRadius: 20,
+                zIndex: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                alignItems: 'flex-start',
+                padding: '12px 20px 24px 20px',
+                boxSizing: 'border-box',
+              }}
+            >
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 16, marginBottom: 2, textAlign: 'left' }}>Restaurant top #1</div>
+              <div style={{ color: '#fff', fontWeight: 800, fontSize: 32, lineHeight: 1.1, textAlign: 'left' }}>{banner.title}</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 20, marginBottom: 8, textAlign: 'left' }}>{banner.subtitle}</div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                {banners.map((_, dotIdx) => (
+                  <span
+                    key={dotIdx}
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: '#fff',
+                      opacity: dotIdx === current ? 0.8 : 0.4,
+                      display: 'inline-block',
+                    }}
+                  ></span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
