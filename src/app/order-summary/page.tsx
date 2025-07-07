@@ -36,7 +36,7 @@ export default function OrderSummary() {
     if (storedUser) setUser(JSON.parse(storedUser));
     const storedCart = localStorage.getItem("orderCart");
     if (storedCart) setCart(JSON.parse(storedCart));
-  }, []);
+  }, [router]);
 
   const grouped = cart.reduce((acc, item) => {
     if (!acc[item.dish_type]) acc[item.dish_type] = [];

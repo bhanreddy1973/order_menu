@@ -59,14 +59,7 @@ export default function MenuPage() {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All"); // default to 'All'
 const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-const [cart, setCart] = useState<Record<string, CartItem>>(() => {
-    const storedCart = localStorage.getItem("orderCart");
-    if (storedCart) {
-      const parsed = JSON.parse(storedCart) as CartItem[];
-      return Object.fromEntries(parsed.map((item) => [item.id, item]));
-    }
-    return {};
-  });
+const [cart, setCart] = useState<Record<string, CartItem>>({});
 
   const [selectedSort, setSelectedSort] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(false);
@@ -127,16 +120,16 @@ useEffect(() => {
     );
     setCart(cartMap);
   }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     setExpandedItemId(null);
-  }, [activePanelIndex, selectedCategory]);
+  }, [activePanelIndex, selectedCategory, router]);
 
-  const visibleItems =
-    selectedCategory === "All"
-      ? menuItems
-      : menuItems.filter((item) => item.dish_type === selectedCategory);
+  // const visibleItems =
+  //   selectedCategory === "All"
+  //     ? menuItems
+  //     : menuItems.filter((item) => item.dish_type === selectedCategory);
 
       // type IncomingItem = Omit<CartItem, 'count' | 'addedBy' | 'total'>;
 //  const increaseItem = (item: IncomingItem) => {
@@ -234,53 +227,53 @@ const increaseItem = (item: MenuItem) => {
 
 
 
-const decreaseItem = (item: MenuItem) => {
-  setCart((prev) => {
-    const existing = prev[item.id];
-    if (!existing || existing.count <= 1) {
-      const newCart = { ...prev };
-      delete newCart[item.id];
-      localStorage.setItem("orderCart", JSON.stringify(Object.values(newCart)));
-      return newCart;
-    }
+// const decreaseItem = (item: MenuItem) => {
+//   setCart((prev) => {
+//     const existing = prev[item.id];
+//     if (!existing || existing.count <= 1) {
+//       const newCart = { ...prev };
+//       delete newCart[item.id];
+//       localStorage.setItem("orderCart", JSON.stringify(Object.values(newCart)));
+//       return newCart;
+//     }
 
-    const count = existing.count - 1;
+//     const count = existing.count - 1;
 
-    const updated: Record<string, CartItem> = {
-      ...prev,
-      [item.id]: {
-        ...existing,
-        count,
-        total: item.price * count,
-      },
-    };
+//     const updated: Record<string, CartItem> = {
+//       ...prev,
+//       [item.id]: {
+//         ...existing,
+//         count,
+//         total: item.price * count,
+//       },
+//     };
 
-    localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
-    return updated;
-  });
-};
+//     localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
+//     return updated;
+//   });
+// };
 
 
-  const handleCustomization = (id: string, value: string) => {
-    setCart((prev) => {
-      if (!prev[id]) return prev;
-      const updated = {
-        ...prev,
-        [id]: {
-          ...prev[id],
-          customization: value,
-        },
-      };
-      localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
-      return updated;
-    });
-  };
+  // const handleCustomization = (id: string, value: string) => {
+  //   setCart((prev) => {
+  //     if (!prev[id]) return prev;
+  //     const updated = {
+  //       ...prev,
+  //       [id]: {
+  //         ...prev[id],
+  //         customization: value,
+  //       },
+  //     };
+  //     localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
+  //     return updated;
+  //   });
+  // };
 
   // New: Find the expanded item object
-  const expandedItem = expandedItemId ? visibleItems.find(item => item.id === expandedItemId) : null;
-  const compactItems = expandedItemId
-    ? visibleItems.filter(item => item.id !== expandedItemId)
-    : visibleItems;
+  // const expandedItem = expandedItemId ? visibleItems.find(item => item.id === expandedItemId) : null;
+  // const compactItems = expandedItemId
+  //   ? visibleItems.filter(item => item.id !== expandedItemId)
+  //   : visibleItems;
 
   const handleAdd = (item: MenuItem) => {
     increaseItem(item);
