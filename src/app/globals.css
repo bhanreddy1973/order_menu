@@ -24,3 +24,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.added-card-animate {
+  animation: addedPulse 0.5s;
+}
+@keyframes addedPulse {
+  0% { transform: scale(1); }
+  60% { transform: scale(1.06); }
+  100% { transform: scale(1.03); }
+}
