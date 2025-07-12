@@ -57,6 +57,8 @@ export default function MenuPage() {
     allergens?: string;
   };
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<string[]>([]); // allow multiple expanded
+  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
   const [selectedCategory, setSelectedCategory] = useState("All"); // default to 'All'
 const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 const [cart, setCart] = useState<Record<string, CartItem>>({});
@@ -192,6 +194,67 @@ const increaseItem = (item: MenuItem) => {
         total: price * count,
         customization: existing?.customization || ""
       }
+    };
+    localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
+    return updated;
+  });
+};
+
+const decreaseItem = (item: MenuItem) => {
+  setCart((prev) => {
+    const existing = prev[item.id];
+    if (!existing || existing.count <= 1) {
+      const newCart = { ...prev };
+      delete newCart[item.id];
+      localStorage.setItem("orderCart", JSON.stringify(Object.values(newCart)));
+      return newCart;
+    }
+
+    const count = existing.count - 1;
+
+    const updated: Record<string, CartItem> = {
+      ...prev,
+      [item.id]: {
+        ...existing,
+        count,
+        total: item.price * count,
+      },
+    };
+
+    localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
+    return updated;
+  });
+};
+
+const toggleExpand = (id: string) => {
+  setExpandedIds((prev) => {
+    const isExpanded = prev.includes(id);
+    const newArr = isExpanded ? prev.filter((x) => x !== id) : [...prev, id];
+    return newArr;
+  });
+
+  setActiveTabs((prev) => {
+    if (!prev[id]) return { ...prev, [id]: "Ingredients" };
+    return prev;
+  });
+};
+
+const isInCart = (id: string) => !!cart[id];
+
+const visibleItems =
+  selectedCategory === "All"
+    ? menuItems
+    : menuItems.filter((item) => item.dish_type === selectedCategory);
+
+const handleCustomization = (id: string, value: string) => {
+  setCart((prev) => {
+    if (!prev[id]) return prev;
+    const updated = {
+      ...prev,
+      [id]: {
+        ...prev[id],
+        customization: value,
+      },
     };
     localStorage.setItem("orderCart", JSON.stringify(Object.values(updated)));
     return updated;
