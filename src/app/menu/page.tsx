@@ -57,8 +57,9 @@ export default function MenuPage() {
     allergens?: string;
   };
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
-  const [expandedIds, setExpandedIds] = useState<string[]>([]); // allow multiple expanded
-  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
+  // Legacy states for master branch compatibility (not used in current trail UI)
+  // const [expandedIds, setExpandedIds] = useState<string[]>([]); // allow multiple expanded
+  // const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
   const [selectedCategory, setSelectedCategory] = useState("All"); // default to 'All'
 const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 const [cart, setCart] = useState<Record<string, CartItem>>({});
@@ -226,18 +227,19 @@ const decreaseItem = (item: MenuItem) => {
   });
 };
 
-const toggleExpand = (id: string) => {
-  setExpandedIds((prev) => {
-    const isExpanded = prev.includes(id);
-    const newArr = isExpanded ? prev.filter((x) => x !== id) : [...prev, id];
-    return newArr;
-  });
+// Legacy function from master branch (not used in current trail UI)
+// const toggleExpand = (id: string) => {
+//   setExpandedIds((prev) => {
+//     const isExpanded = prev.includes(id);
+//     const newArr = isExpanded ? prev.filter((x) => x !== id) : [...prev, id];
+//     return newArr;
+//   });
 
-  setActiveTabs((prev) => {
-    if (!prev[id]) return { ...prev, [id]: "Ingredients" };
-    return prev;
-  });
-};
+//   setActiveTabs((prev) => {
+//     if (!prev[id]) return { ...prev, [id]: "Ingredients" };
+//     return prev;
+//   });
+// };
 
 const isInCart = (id: string) => !!cart[id];
 
